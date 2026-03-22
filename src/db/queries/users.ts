@@ -25,3 +25,8 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   const [result] = await db.select().from(users).where(eq(users.email, email)).limit(1);
   return result ?? null;
 }
+
+export async function updateUserIsChirpyRed(userId: string) : Promise<User | null> {
+  const [result] = await db.update(users).set({ isChirpyRed: true }).where(eq(users.id, userId)).returning();
+  return result ?? null;
+}

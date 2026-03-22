@@ -1,4 +1,4 @@
-import { config } from "src/config.js";
+import { config } from "../../config.js";
 import { db } from "../index.js";
 import { refreshTokens } from "../schema.js";
 import { and, eq, gt, isNull } from "drizzle-orm";

@@ -48,6 +48,7 @@ export async function handlerLogin(req: Request, res: Response): Promise<void> {
     updatedAt: user.updatedAt,
     token: token,
     refreshToken: refreshToken,
+    isChirpyRed: user.isChirpyRed,
   } satisfies LoginResponse;
 
   respondWithJSON(res, 200, sanitizedUser);

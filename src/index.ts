@@ -2,7 +2,7 @@ import express from "express";
 import { handlerReadiness } from "./api/readiness.js";
 import { middlewareLogResponses } from "./api/middleware.js";
 import { handlerServerHitsCount } from "./api/metrics.js";
-import { handlerResetUsersCount, handlerUpdateUser } from "./api/users.js";
+import { handlerResetUsersCount, handlerUpdateUser, handlerUpdateUserMembership } from "./api/users.js";
 import { handlerLogin } from "./api/login.js";
 import { handlerRefresh, handlerRevoke } from "./api/refresh.js";
 import { middlewareMetricsInc, errorMiddleware } from "./api/middleware.js";
@@ -25,7 +25,9 @@ await migrate(drizzle(migrationClient), config.db.migrationConfig);
 const app = express();
 
 app.use(middlewareLogResponses);
+app.use(errorMiddleware);
 app.use(express.json()); // express.json() lets us not have to parse JSON bodies ourselves (str buffer)
+
 
 app.use("/app", middlewareMetricsInc, express.static("./src/app"));
 
@@ -53,10 +55,13 @@ app.put("/api/users", async (req, res, next) => {
   Promise.resolve(handlerUpdateUser(req, res)).catch(next);
 });
 
+app.post("/api/polka/webhooks", async (req, res, next) => {
+  Promise.resolve(handlerUpdateUserMembership(req, res)).catch(next);
+})
+
 app.post("/api/login", async (req, res, next) => {
   Promise.resolve(handlerLogin(req, res)).catch(next);
 });
-
 
 app.post("/api/refresh", async (req, res, next) => {
   Promise.resolve(handlerRefresh(req, res)).catch(next);
@@ -65,7 +70,6 @@ app.post("/api/refresh", async (req, res, next) => {
 app.post("/api/revoke", async (req, res, next) => {
   Promise.resolve(handlerRevoke(req, res)).catch(next);
 });
-
 
 app.get("/api/chirps", async (req, res, next) => {
   Promise.resolve(handlerGetChirps(req, res)).catch(next);
@@ -82,9 +86,6 @@ app.post("/api/chirps", async (req, res, next) => {
 app.delete("/api/chirps/:chirpId", async (req, res, next) => {
   Promise.resolve(handlerDeleteChirp(req, res)).catch(next);
 })
-
-
-app.use(errorMiddleware);
 
 app.listen(config.api.port, () => {
   console.log(`Server is running at http://localhost:${config.api.port}`);

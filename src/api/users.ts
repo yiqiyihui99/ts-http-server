@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
 import { BadRequestError, ForbiddenError } from "./errors.js";
-import { createUser, deleteAllUsers, updateUserPassword } from "../db/queries/users.js";
+import { createUser, deleteAllUsers, updateUserPassword, updateUserIsChirpyRed } from "../db/queries/users.js";
 import { respondWithError, respondWithJSON } from "./json.js";
 import { config } from "../config.js";
 import { hashPassword, getBearerToken, validateJWT } from "../auth.js";
 import { NewUser } from "../db/schema.js";
 
-// token is optional because it's not required for the user creation or login
+// jwt token is optional because it's not required for the user creation or login
 export type UserResponse = Omit<NewUser, "hashedPassword">;
 
 export async function handlerCreateUser(
@@ -35,6 +35,7 @@ export async function handlerCreateUser(
     email: user.email,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
+    isChirpyRed: user.isChirpyRed
   } satisfies UserResponse;
 
   respondWithJSON(res, 201, sanitizedUser);
@@ -72,9 +73,29 @@ export async function handlerUpdateUser(req: Request, res: Response): Promise<vo
       email: newUser.email,
       createdAt: newUser.createdAt ?? new Date(),
       updatedAt: newUser.updatedAt ?? new Date(),
+      isChirpyRed: newUser.isChirpyRed
   } satisfies UserResponse;
   respondWithJSON(res, 200, sanitizedUser);
   } catch (e) {
     respondWithError(res, 401, "Invalid token");
   }
+}
+
+export async function handlerUpdateUserMembership(req: Request, res: Response): Promise<void> {
+    const event = req.body.event;
+    if (!event || event !== "user.upgraded") {
+      res.status(204).send();
+      return;
+    }
+    const userId = req.body.data.userId;
+    if (!userId || typeof userId !== "string") {
+      respondWithError(res, 404, "User not found");
+      return;
+    }
+    const updatedUser = await updateUserIsChirpyRed(userId);
+    if (!updatedUser) {
+      respondWithError(res, 404, "User not found");
+      return;
+    }
+    res.status(204).send();
 }

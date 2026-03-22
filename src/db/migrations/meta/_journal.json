@@ -43,6 +43,13 @@
       "when": 1773520079996,
       "tag": "0005_cute_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774149124776,
+      "tag": "0006_sleepy_firelord",
+      "breakpoints": true
     }
   ]
 }
