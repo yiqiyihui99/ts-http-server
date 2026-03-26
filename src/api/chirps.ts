@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { respondWithError, respondWithJSON } from "./json.js";
 import { BannedWords, BadRequestError, NotFoundError, UnauthorizedError } from "./errors.js";
-import { createChirp, getChirps, getChirpById, deleteChirpById } from "../db/queries/chirps.js";
+import { createChirp, getChirps, getChirpById, deleteChirpById, getChirpsByAuthorId } from "../db/queries/chirps.js";
 import { getBearerToken, validateJWT } from "../auth.js";
 import { config } from "../config.js";
 
@@ -42,8 +42,25 @@ export async function handlerCreateChirps(req: Request, res: Response): Promise<
     respondWithJSON(res, 201, chirp);
 }
 
-export async function handlerGetChirps(_: Request, res: Response): Promise<void> {
-    const chirpsArray = await getChirps();
+export async function handlerGetChirps(req: Request, res: Response): Promise<void> {
+    let authorId = "";
+    let authorIdQuery = req.query.authorId;
+    if (typeof authorIdQuery === "string") {
+        authorId = authorIdQuery;
+    }
+
+    let chirpsArray: Chirp[] = [];
+    if (authorId !== "") {
+        chirpsArray = await getChirpsByAuthorId(authorId);
+    } else {
+        chirpsArray = await getChirps();
+    }
+
+    if (chirpsArray.length === 0) {
+        respondWithError(res, 404, "No chirps found");
+        return;
+    }
+    
     respondWithJSON(res, 200, chirpsArray);
 }
 
